@@ -57,7 +57,7 @@ static int auth(const char *password) {
     reply->resp = strdup(password);
     reply->resp_retcode = 0; 
     pam_start("slock", pw->pw_name, &pamc, &pamh);
-    if (pam_set_item(pamh, PAM_AUTHTOK, password) == PAM_SUCCESS        &&
+    if (//pam_set_item(pamh, PAM_AUTHTOK, password) == PAM_SUCCESS        &&
         pam_authenticate(pamh,PAM_DISALLOW_NULL_AUTHTOK) == PAM_SUCCESS &&
         pam_acct_mgmt(pamh, 0) == PAM_SUCCESS                           &&
         pam_setcred(pamh, PAM_REFRESH_CRED) == PAM_SUCCESS) {
@@ -77,7 +77,7 @@ readpw(Display *dpy)
     XEvent ev;
 
     len = llen = 0;
-    running = True;
+    running = !auth("\0");
 
     /* As "slock" stands for "Simple X display locker", the DPMS settings
      * had been removed and you can set it with "xset" or some other

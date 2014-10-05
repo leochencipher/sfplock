@@ -1,2 +1,4 @@
-auth		required	pam_bsdauth.so		no_warn try_first_pass nullok
-
+#%PAM-1.0
+auth    sufficient pam_fprintd.so    max_tries=3 timeout=3
+auth    required    pam_unix.so
+auth    required    pam_nologin.so

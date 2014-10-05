@@ -1,5 +1,5 @@
 # slock version
-VERSION = 1.2
+VERSION = 1.2.1
 
 # Customize below to fit your system
 
@@ -28,5 +28,5 @@ CC = cc
 
 # Install mode. On BSD systems MODE=2755 and GROUP=auth
 # On others MODE=4755 and GROUP=root
-#MODE=2755
-#GROUP=auth
+MODE=4755
+GROUP=root
