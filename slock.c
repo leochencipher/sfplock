@@ -77,7 +77,7 @@ readpw(Display *dpy)
     XEvent ev;
 
     len = llen = 0;
-    running = !auth("\0");
+    running = !auth(""); //no password for fingerprint auth. failsafe for other auth types.
 
     /* As "slock" stands for "Simple X display locker", the DPMS settings
      * had been removed and you can set it with "xset" or some other
