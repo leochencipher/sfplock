@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <X11/keysym.h>
@@ -27,7 +28,6 @@ static Bool running = True;
 static void
 die(const char *errstr, ...) {
     va_list ap;
-
     va_start(ap, errstr);
     vfprintf(stderr, errstr, ap);
     va_end(ap);
@@ -38,14 +38,20 @@ static int auth() {
     FILE * fp;
     char buf[80];
     int rc = 0;
+    int uid = -1;
     struct passwd *pwd;
     char cmd [] = "fprintd-verify";
-    pwd = getpwuid(getuid());
+    uid = getuid();
+    pwd = getpwuid(uid);
     strcat(cmd, " ");
     strcat(cmd, pwd->pw_name);
+    setuid(0); //set uid 0 to get permission of reading everyone's fingerprint.
     fp = popen(cmd, "r");
-    do {
+    setuid(uid); //set uid back to normal user.
+    syslog(LOG_INFO, "cmd:%s", cmd);
+    while(!feof(fp)) {
         fgets(buf,sizeof(buf),fp);
+        syslog(LOG_INFO, "%s", buf);
         if (strstr(buf,"verify-match")!=NULL) {
             rc = 1;
             break;
@@ -54,7 +60,11 @@ static int auth() {
             sleep(3);
             break;
         }
-    } while(!feof(fp));
+        else if (strstr(buf,"failed to claim device")!=NULL) {
+            sleep(3);
+            break;
+        }
+    }
     pclose(fp);
     return rc;
 }
@@ -174,9 +184,10 @@ main(int argc, char **argv) {
         XCloseDisplay(dpy);
         return 1;
     }
+    openlog("sfplock", LOG_PID, LOG_USER);
     /* Everything is now blank. Now wait for the correct finger... */
     readfinger(dpy);
-
+    closelog();
     /* verify ok, unlock everything and quit. */
     for(screen = 0; screen < nscreens; screen++)
         unlockscreen(dpy, locks[screen]);

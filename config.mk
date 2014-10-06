@@ -24,6 +24,6 @@ LDFLAGS = -s ${LIBS}
 # compiler and linker
 CC = cc
 
-# Default MODE=0755 and GROUP=root
-MODE=0755
+# Default MODE=4755 and GROUP=root
+MODE=4755
 GROUP=root
