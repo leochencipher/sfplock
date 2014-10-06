@@ -1,24 +1,28 @@
-slock - simple screen locker
+sflock - simple finger screen locker
 ============================
-simple screen locker utility for X. 
+simple screen locker utility for X, unlock by fprintd-verify
 
 
 Requirements
 ------------
-In order to build slock you need the Xlib header files.
-
+In order to build sflock you need the Xlib header files.
+And you MUST have fprintd installed on your system, otherwise
+you CANNOT unlock your screen.
+if you have problem in unlocking, press CTRL+ALT+F1 and log 
+into the console, then killall sflock. 
 
 Installation
 ------------
-Edit config.mk to match your local setup (slock is installed into
+Edit config.mk to match your local setup (sflock is installed into
 the /usr/local namespace by default).
 
-Afterwards enter the following command to build and install slock
+Afterwards enter the following command to build and install sflock
 (if necessary as root):
 
     make clean install
 
 
-Running slock
+Running sflock
 -------------
-Simply invoke the 'slock' command. To get out of it, enter your password.
+Simply invoke the 'sflock' command. To get out of it, simply swipe 
+your right-index finger(the default value of fprintd-verify command).

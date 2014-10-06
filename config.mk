@@ -1,5 +1,5 @@
-# slock version
-VERSION = 1.2.1
+# sflock version
+VERSION = 1.0
 
 # Customize below to fit your system
 
@@ -12,9 +12,7 @@ X11LIB = /usr/X11R6/lib
 # includes and libs
 INCS = -I. -I/usr/include -I${X11INC} -I/usr/local/include
 
-
-# On OpenBSD and Darwin remove -lcrypt from LIBS
-LIBS = -L/usr/lib -L/usr/local/lib -lc -L${X11LIB} -lX11 -lXext -lpam -lcrypt
+LIBS = -L/usr/lib -L/usr/local/lib -lc -L${X11LIB} -lX11 -lXext
 
 # flags
 # On *BSD remove -DHAVE_SHADOW_H from CPPFLAGS and add -DHAVE_BSD_AUTH

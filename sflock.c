@@ -13,8 +13,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include <security/pam_appl.h> 
-
 typedef struct {
     int screen;
     Window root, win;
@@ -36,104 +34,37 @@ die(const char *errstr, ...) {
     exit(EXIT_FAILURE);
 }
 
-static int conversation(int num_msg, const struct pam_message **msg, struct pam_response **resp, void *reply)   {  
-    *resp = reply;
-    return PAM_SUCCESS;  
-}
-
-static int auth(const char *password) {
-    pam_handle_t* pamh; 
-    struct passwd *pw;
-    if ((pw = getpwuid(getuid())) == NULL)
-        return 0;
-
-    struct pam_response * reply = malloc(sizeof(struct pam_response));
-    if (!reply)
-        return 0;
-
-    struct pam_conv pamc = { conversation, reply };
+static int auth() {
+    FILE * fp;
+    char buf[80];
     int rc = 0;
-
-    reply->resp = strdup(password);
-    reply->resp_retcode = 0; 
-    pam_start("slock", pw->pw_name, &pamc, &pamh);
-    if (//pam_set_item(pamh, PAM_AUTHTOK, password) == PAM_SUCCESS        &&
-        pam_authenticate(pamh,PAM_DISALLOW_NULL_AUTHTOK) == PAM_SUCCESS &&
-        pam_acct_mgmt(pamh, 0) == PAM_SUCCESS                           &&
-        pam_setcred(pamh, PAM_REFRESH_CRED) == PAM_SUCCESS) {
-           rc = 1;
-    }
-    pam_end(pamh,0);
+    fp = popen("/usr/bin/fprintd-verify","r");
+    do {
+        fgets(buf,sizeof(buf),fp);
+        if (strstr(buf,"verify-match")!=NULL) {
+            rc = 1;
+            break;
+        }
+        else if (strstr(buf,"verify-no-match")!=NULL) {
+            sleep(3);
+            break;
+        }
+    } while(!feof(fp));
+    pclose(fp);
     return rc;
 }
 
 static void
-readpw(Display *dpy)
+readfinger(Display *dpy)
 {
-    char buf[32], passwd[256];
-    int num, screen;
-    unsigned int len, llen;
-    KeySym ksym;
-    XEvent ev;
-
-    len = llen = 0;
-    running = !auth(""); //no password for fingerprint auth. failsafe for other auth types.
-
-    /* As "slock" stands for "Simple X display locker", the DPMS settings
-     * had been removed and you can set it with "xset" or some other
-     * utility. This way the user can easily set a customized DPMS
-     * timeout. */
-    while(running && !XNextEvent(dpy, &ev)) {
-        if(ev.type == KeyPress) {
-            buf[0] = 0;
-            num = XLookupString(&ev.xkey, buf, sizeof buf, &ksym, 0);
-            if(IsKeypadKey(ksym)) {
-                if(ksym == XK_KP_Enter)
-                    ksym = XK_Return;
-                else if(ksym >= XK_KP_0 && ksym <= XK_KP_9)
-                    ksym = (ksym - XK_KP_0) + XK_0;
-            }
-            if(IsFunctionKey(ksym) || IsKeypadKey(ksym)
-                    || IsMiscFunctionKey(ksym) || IsPFKey(ksym)
-                    || IsPrivateKeypadKey(ksym))
-                continue;
-            switch(ksym) {
-            case XK_Return:
-                passwd[len] = 0;
-                running = !auth(passwd);
-                if(running)
-                    XBell(dpy, 100);
-                len = 0;
-                break;
-            case XK_Escape:
-                len = 0;
-                break;
-            case XK_BackSpace:
-                if(len)
-                    --len;
-                break;
-            default:
-                if(num && !iscntrl((int) buf[0]) && (len + num < sizeof passwd)) { 
-                    memcpy(passwd + len, buf, num);
-                    len += num;
-                }
-                break;
-            }
-            if(llen == 0 && len != 0) {
-                for(screen = 0; screen < nscreens; screen++) {
-                    XSetWindowBackground(dpy, locks[screen]->win, locks[screen]->colors[1]);
-                    XClearWindow(dpy, locks[screen]->win);
-                }
-            } else if(llen != 0 && len == 0) {
-                for(screen = 0; screen < nscreens; screen++) {
-                    XSetWindowBackground(dpy, locks[screen]->win, locks[screen]->colors[0]);
-                    XClearWindow(dpy, locks[screen]->win);
-                }
-            }
-            llen = len;
-        }
-        else for(screen = 0; screen < nscreens; screen++)
+    int screen;
+    running = True;
+    while(running) {
+        running = !auth();
+        for(screen = 0; screen < nscreens; screen++)
+        {
             XRaiseWindow(dpy, locks[screen]->win);
+        }
     }
 }
 
@@ -146,7 +77,6 @@ unlockscreen(Display *dpy, Lock *lock) {
     XFreeColors(dpy, DefaultColormap(dpy, lock->screen), lock->colors, 2, 0);
     XFreePixmap(dpy, lock->pmap);
     XDestroyWindow(dpy, lock->win);
-
     free(lock);
 }
 
@@ -216,38 +146,34 @@ main(int argc, char **argv) {
     int screen;
 
     if((argc == 2) && !strcmp("-v", argv[1]))
-        die("slock-%s, © 2006-2012 Anselm R Garbe\n", VERSION);
+        die("sflock-%s, rains31@gmail.com\nbased on slock-1.1 © 2006-2012 Anselm R Garbe\n", VERSION);
 
     if(!(dpy = XOpenDisplay(0)))
-        die("slock: cannot open display\n");
+        die("sflock: cannot open display\n");
     /* Get the number of screens in display "dpy" and blank them all. */
     nscreens = ScreenCount(dpy);
     locks = malloc(sizeof(Lock *) * nscreens);
     if(locks == NULL)
-        die("slock: malloc: %s\n", strerror(errno));
+        die("sflock: malloc: %s\n", strerror(errno));
     int nlocks = 0;
     for(screen = 0; screen < nscreens; screen++) {
         if ( (locks[screen] = lockscreen(dpy, screen)) != NULL)
             nlocks++;
     }
     XSync(dpy, False);
-
     /* Did we actually manage to lock something? */
     if (nlocks == 0) { // nothing to protect
         free(locks);
         XCloseDisplay(dpy);
         return 1;
     }
+    /* Everything is now blank. Now wait for the correct finger... */
+    readfinger(dpy);
 
-    /* Everything is now blank. Now wait for the correct password. */
-    readpw(dpy);
-
-    /* Password ok, unlock everything and quit. */
+    /* verify ok, unlock everything and quit. */
     for(screen = 0; screen < nscreens; screen++)
         unlockscreen(dpy, locks[screen]);
-
     free(locks);
     XCloseDisplay(dpy);
-
     return 0;
 }
