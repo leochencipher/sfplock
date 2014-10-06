@@ -146,15 +146,15 @@ main(int argc, char **argv) {
     int screen;
 
     if((argc == 2) && !strcmp("-v", argv[1]))
-        die("sflock-%s, rains31@gmail.com\nbased on slock-1.1 © 2006-2012 Anselm R Garbe\n", VERSION);
+        die("sfplock-%s, rains31@gmail.com\nbased on slock-1.1 © 2006-2012 Anselm R Garbe\n", VERSION);
 
     if(!(dpy = XOpenDisplay(0)))
-        die("sflock: cannot open display\n");
+        die("sfplock: cannot open display\n");
     /* Get the number of screens in display "dpy" and blank them all. */
     nscreens = ScreenCount(dpy);
     locks = malloc(sizeof(Lock *) * nscreens);
     if(locks == NULL)
-        die("sflock: malloc: %s\n", strerror(errno));
+        die("sfplock: malloc: %s\n", strerror(errno));
     int nlocks = 0;
     for(screen = 0; screen < nscreens; screen++) {
         if ( (locks[screen] = lockscreen(dpy, screen)) != NULL)
