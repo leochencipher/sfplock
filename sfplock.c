@@ -66,8 +66,10 @@ readfinger(Display *dpy)
     running = True;
     while(running) {
         running = !auth();
-        for(screen = 0; screen < nscreens; screen++)
-        {
+        if(running){
+            sleep(1);//prevent calling fprintd-verify too fast when fingerprint device doesn't work.
+        }
+        for(screen = 0; screen < nscreens; screen++) {
             XRaiseWindow(dpy, locks[screen]->win);
         }
     }
