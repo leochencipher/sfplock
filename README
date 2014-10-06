@@ -14,7 +14,7 @@ into the console, then killall sfplock.
 Installation
 ------------
 Edit config.mk to match your local setup (sfplock is installed into
-the /usr/local namespace by default).
+the /usr/local namespace by default, and use /usr/bin/fprintd-verify to verify the fingerprint).
 
 Afterwards enter the following command to build and install sfplock
 (if necessary as root):
