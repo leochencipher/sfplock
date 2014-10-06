@@ -40,7 +40,7 @@ static int auth() {
     int rc = 0;
     int uid = -1;
     struct passwd *pwd;
-    char cmd [] = "fprintd-verify";
+    char cmd [] = FPRINTD_VERIFY;
     uid = getuid();
     pwd = getpwuid(uid);
     strcat(cmd, " ");
@@ -163,7 +163,7 @@ main(int argc, char **argv) {
     int screen;
 
     if((argc == 2) && !strcmp("-v", argv[1]))
-        die("sfplock-%s, rains31@gmail.com\nbased on slock-1.1 © 2006-2012 Anselm R Garbe\n", VERSION);
+        die("sfplock-%s © 2012 Rains<rains31(at)gmail.com>\nbased on slock-1.1 © 2006-2012 Anselm R Garbe\n", VERSION);
 
     if(!(dpy = XOpenDisplay(0)))
         die("sfplock: cannot open display\n");
