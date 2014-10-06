@@ -38,7 +38,12 @@ static int auth() {
     FILE * fp;
     char buf[80];
     int rc = 0;
-    fp = popen("/usr/bin/fprintd-verify","r");
+    struct passwd *pwd;
+    char cmd [] = "fprintd-verify";
+    pwd = getpwuid(getuid());
+    strcat(cmd, " ");
+    strcat(cmd, pwd->pw_name);
+    fp = popen(cmd, "r");
     do {
         fgets(buf,sizeof(buf),fp);
         if (strstr(buf,"verify-match")!=NULL) {

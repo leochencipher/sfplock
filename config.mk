@@ -24,7 +24,6 @@ LDFLAGS = -s ${LIBS}
 # compiler and linker
 CC = cc
 
-# Install mode. On BSD systems MODE=2755 and GROUP=auth
-# On others MODE=4755 and GROUP=root
-MODE=4755
+# Default MODE=0755 and GROUP=root
+MODE=0755
 GROUP=root
