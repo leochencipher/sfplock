@@ -34,17 +34,15 @@ die(const char *errstr, ...) {
     exit(EXIT_FAILURE);
 }
 
-static int auth() {
+static int fprint_verify(char * user) {
     FILE * fp;
     char buf[80];
-    int rc = 0;
+    int ret = 0;
     int uid = -1;
-    struct passwd *pwd;
     char cmd [] = FPRINTD_VERIFY;
     uid = getuid();
-    pwd = getpwuid(uid);
     strcat(cmd, " ");
-    strcat(cmd, pwd->pw_name);
+    strcat(cmd, user);
     setuid(0); //set uid 0 to get permission of reading everyone's fingerprint.
     fp = popen(cmd, "r");
     setuid(uid); //set uid back to normal user.
@@ -53,29 +51,31 @@ static int auth() {
         fgets(buf,sizeof(buf),fp);
         syslog(LOG_INFO, "%s", buf);
         if (strstr(buf,"verify-match")!=NULL) {
-            rc = 1;
+            ret = 0;
             break;
         }
         else if (strstr(buf,"verify-no-match")!=NULL) {
+            ret = 1;
             sleep(3);
             break;
         }
         else if (strstr(buf,"failed to claim device")!=NULL) {
+            ret = 2;
             sleep(3);
             break;
         }
     }
-    pclose(fp);
-    return rc;
+    ret |= pclose(fp);
+    return ret;
 }
 
 static void
-readfinger(Display *dpy)
+wait_fingerprint(Display *dpy, char * user)
 {
     int screen;
     running = True;
     while(running) {
-        running = !auth();
+        running = fprint_verify(user);
         if(running){
             sleep(1);//prevent calling fprintd-verify too fast when fingerprint device doesn't work.
         }
@@ -84,7 +84,24 @@ readfinger(Display *dpy)
         }
     }
 }
-
+static void
+ensure_fprint_exists(char * user) {
+    FILE * fp;
+    char buf[100];
+    char cmd [] = "fprintd-list ";
+    strcat(cmd, user);
+    fp = popen(cmd, "r");
+    while(!feof(fp)) {
+        fgets(buf, sizeof(buf), fp);
+        fprintf(stderr, "%s", buf);
+        if (strstr(buf,"Fingerprints for user")!=NULL) {
+            pclose(fp);
+            return;
+        }
+    }
+    pclose(fp);
+    die("sfplock: fingerprint not found for user '%s'.\n", user);
+}
 static void
 unlockscreen(Display *dpy, Lock *lock) {
     if(dpy == NULL || lock == NULL)
@@ -161,18 +178,30 @@ int
 main(int argc, char **argv) {
     Display *dpy;
     int screen;
+    int nlocks = 0;
+    int uid = -1;
+    struct passwd *pwd;
+    char *user = NULL;
 
     if((argc == 2) && !strcmp("-v", argv[1]))
         die("sfplock-%s © 2012 Rains<rains31(at)gmail.com>\nbased on slock-1.1 © 2006-2012 Anselm R Garbe\n", VERSION);
 
     if(!(dpy = XOpenDisplay(0)))
         die("sfplock: cannot open display\n");
+
     /* Get the number of screens in display "dpy" and blank them all. */
     nscreens = ScreenCount(dpy);
     locks = malloc(sizeof(Lock *) * nscreens);
+
     if(locks == NULL)
         die("sfplock: malloc: %s\n", strerror(errno));
-    int nlocks = 0;
+
+    uid = getuid();
+    pwd = getpwuid(uid);
+    user = pwd->pw_name;
+
+    ensure_fprint_exists(user);
+
     for(screen = 0; screen < nscreens; screen++) {
         if ( (locks[screen] = lockscreen(dpy, screen)) != NULL)
             nlocks++;
@@ -186,7 +215,7 @@ main(int argc, char **argv) {
     }
     openlog("sfplock", LOG_PID, LOG_USER);
     /* Everything is now blank. Now wait for the correct finger... */
-    readfinger(dpy);
+    wait_fingerprint(dpy, user);
     closelog();
     /* verify ok, unlock everything and quit. */
     for(screen = 0; screen < nscreens; screen++)
