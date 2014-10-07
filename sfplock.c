@@ -34,10 +34,10 @@ die(const char *errstr, ...) {
     exit(EXIT_FAILURE);
 }
 
-static int fprint_verify(char * user) {
+static int fprint_verify(const char * user) {
     FILE * fp;
     char buf[80];
-    int ret = 0;
+    int ret = 1;
     int uid = -1;
     char cmd[200] = FPRINTD_PREFIX"/bin/fprintd-verify ";
     uid = getuid();
@@ -64,12 +64,12 @@ static int fprint_verify(char * user) {
             break;
         }
     }
-    ret |= pclose(fp);
+    pclose(fp);
     return ret;
 }
 
 static void
-wait_fingerprint(Display *dpy, char * user)
+wait_fingerprint(Display *dpy, const char * user)
 {
     int screen;
     running = True;
@@ -84,7 +84,7 @@ wait_fingerprint(Display *dpy, char * user)
     }
 }
 static void
-ensure_fprint_exists(char * user) {
+ensure_fprint_exists(const char * user) {
     FILE * fp;
     char buf[100];
     char cmd[200] = FPRINTD_PREFIX"/bin/fprintd-list ";
@@ -180,17 +180,16 @@ main(int argc, char **argv) {
     int nlocks = 0;
     int uid = -1;
     struct passwd *pwd;
-    char *user = NULL;
+    char user[100] = "";
 
     if((argc == 2) && !strcmp("-v", argv[1]))
         die("sfplock-%s © 2012 Rains<rains31(at)gmail.com>\nbased on slock-1.1 © 2006-2012 Anselm R Garbe\n", VERSION);
 
     uid = getuid();
     pwd = getpwuid(uid);
-    user = pwd->pw_name;
+    strncpy(user, pwd->pw_name, 100);
 
     ensure_fprint_exists(user);
-
     if(!(dpy = XOpenDisplay(0)))
         die("sfplock: cannot open display\n");
 
