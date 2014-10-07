@@ -5,7 +5,7 @@ VERSION = 1.0
 
 # paths
 PREFIX = /usr/local
-FPRINTD_VERIFY=/usr/bin/fprintd-verify
+FPRINTD_PREFIX=/usr
 
 X11INC = /usr/X11R6/include
 X11LIB = /usr/X11R6/lib
@@ -17,7 +17,7 @@ LIBS = -L/usr/lib -L/usr/local/lib -lc -L${X11LIB} -lX11 -lXext
 
 # flags
 # On *BSD remove -DHAVE_SHADOW_H from CPPFLAGS and add -DHAVE_BSD_AUTH
-CPPFLAGS = -DFPRINTD_VERIFY=\"${FPRINTD_VERIFY}\" -DVERSION=\"${VERSION}\" -DHAVE_SHADOW_H  -DCOLOR1=\"black\" -DCOLOR2=\"\#005577\"
+CPPFLAGS = -DFPRINTD_PREFIX=\"${FPRINTD_PREFIX}\" -DVERSION=\"${VERSION}\" -DHAVE_SHADOW_H  -DCOLOR1=\"black\" -DCOLOR2=\"\#005577\"
 CFLAGS = -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
 LDFLAGS = -s ${LIBS}
 

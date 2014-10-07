@@ -1,6 +1,6 @@
 sfplock - simple fingerprint screen locker
-============================
-simple screen locker utility for X, unlock by fprintd-verify
+==========================================
+simple screen locker utility for X, unlock with fprintd-verify
 
 
 Requirements
@@ -14,7 +14,8 @@ into the console, then killall sfplock.
 Installation
 ------------
 Edit config.mk to match your local setup (sfplock is installed into
-the /usr/local namespace by default, and use /usr/bin/fprintd-verify to verify the fingerprint).
+the /usr/local namespace by default, and use /usr/bin/fprintd-verify
+to verify the fingerprint).
 
 Afterwards enter the following command to build and install sfplock
 (if necessary as root):
@@ -23,6 +24,6 @@ Afterwards enter the following command to build and install sfplock
 
 
 Running sfplock
--------------
+---------------
 Simply invoke the 'sfplock' command. To get out of it, simply swipe 
 your right-index finger(the default value of fprintd-verify command).
