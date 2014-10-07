@@ -39,7 +39,7 @@ static int fprint_verify(char * user) {
     char buf[80];
     int ret = 0;
     int uid = -1;
-    char cmd [] = FPRINTD_PREFIX"/bin/fprintd-verify ";
+    char * cmd = FPRINTD_PREFIX"/bin/fprintd-verify ";
     uid = getuid();
     strcat(cmd, user);
     setuid(0); //set uid 0 to get permission of reading everyone's fingerprint.
@@ -87,7 +87,7 @@ static void
 ensure_fprint_exists(char * user) {
     FILE * fp;
     char buf[100];
-    char cmd [] = FPRINTD_PREFIX"/bin/fprintd-list ";
+    char * cmd = FPRINTD_PREFIX"/bin/fprintd-list ";
     strcat(cmd, user);
     fp = popen(cmd, "r");
     while(!feof(fp)) {
