@@ -39,9 +39,9 @@ static int fprint_verify(char * user) {
     char buf[80];
     int ret = 0;
     int uid = -1;
-    char * cmd = FPRINTD_PREFIX"/bin/fprintd-verify ";
+    char cmd[200] = FPRINTD_PREFIX"/bin/fprintd-verify ";
     uid = getuid();
-    strcat(cmd, user);
+    strncat(cmd, user, 100);
     setuid(0); //set uid 0 to get permission of reading everyone's fingerprint.
     fp = popen(cmd, "r");
     setuid(uid); //set uid back to normal user.
@@ -87,8 +87,8 @@ static void
 ensure_fprint_exists(char * user) {
     FILE * fp;
     char buf[100];
-    char * cmd = FPRINTD_PREFIX"/bin/fprintd-list ";
-    strcat(cmd, user);
+    char cmd[200] = FPRINTD_PREFIX"/bin/fprintd-list ";
+    strncat(cmd, user, 100);
     fp = popen(cmd, "r");
     while(!feof(fp)) {
         fgets(buf, sizeof(buf), fp);
@@ -185,6 +185,12 @@ main(int argc, char **argv) {
     if((argc == 2) && !strcmp("-v", argv[1]))
         die("sfplock-%s © 2012 Rains<rains31(at)gmail.com>\nbased on slock-1.1 © 2006-2012 Anselm R Garbe\n", VERSION);
 
+    uid = getuid();
+    pwd = getpwuid(uid);
+    user = pwd->pw_name;
+
+    ensure_fprint_exists(user);
+
     if(!(dpy = XOpenDisplay(0)))
         die("sfplock: cannot open display\n");
 
@@ -194,12 +200,6 @@ main(int argc, char **argv) {
 
     if(locks == NULL)
         die("sfplock: malloc: %s\n", strerror(errno));
-
-    uid = getuid();
-    pwd = getpwuid(uid);
-    user = pwd->pw_name;
-
-    ensure_fprint_exists(user);
 
     for(screen = 0; screen < nscreens; screen++) {
         if ( (locks[screen] = lockscreen(dpy, screen)) != NULL)
